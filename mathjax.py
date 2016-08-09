@@ -57,14 +57,28 @@ def html_visit_displaymath(self, node):
     self.body.append('</div>\n')
     raise nodes.SkipNode
 
-
+try:
+    basestring
+except:
+    basestring = str
+    
 def builder_inited(app):
-    if not app.config.mathjax_path:
+    jaxpath = app.config.mathjax_path
+    if not jaxpath:
         raise ExtensionError('mathjax_path config value must be set for the '
                              'mathjax extension to work')
-    app.add_javascript(app.config.mathjax_path)
+							 
+    # app.config.mathjax_path can be a string or a list of strings							 
+    if isinstance(jaxpath, basestring):
+        app.add_javascript(jaxpath)
+    else:
+        for p in jaxpath:
+            app.add_javascript(p)
+    
+    if app.config.mathjax_css:
+        app.add_stylesheet(app.config.mathjax_css)
 
-
+      
 def setup(app):
     try:
         mathbase_setup(app, (html_visit_math, None), (html_visit_displaymath, None))
@@ -76,6 +90,8 @@ def setup(app):
     app.add_config_value('mathjax_path',
                          'https://cdn.mathjax.org/mathjax/latest/MathJax.js?'
                          'config=TeX-AMS-MML_HTMLorMML', False)
+    app.add_config_value('mathjax_css', None, 'html')
+    app.add_config_value('mathjax_use_katex', False, 'html')
     app.add_config_value('mathjax_inline', [r'\(', r'\)'], 'html')
     app.add_config_value('mathjax_display', [r'\[', r'\]'], 'html')
     app.connect('builder-inited', builder_inited)
